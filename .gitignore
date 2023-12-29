@@ -1,5 +1,4 @@
-config/default.json
-.idea
-node_modules/
-.env
-dist/
+node_modules
+.DS_Store
+.env*
+dist
