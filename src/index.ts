@@ -268,23 +268,9 @@ const handleBotCommands = async (
       debug("who command");
       // who command
       postMessage(message_data.channel, "are the humans OnCall.", false);
-    } else if (
-      // need to support mobile which adds : after a mention
-      message.match(new RegExp("^" + bot_tag() + ":?$"))
-    ) {
-      debug("bot mention only");
-      // This is an explicit mention of the bot only.
-      mentionOnCalls(channel.name, "get in here! :point_up_2:");
     } else {
       debug("oncall tag mention");
-      // default
-      let preText =
-        (message_data.user ? " <@" + message_data.user + ">" : bot_tag()) +
-        ' said _"';
-      mentionOnCalls(
-        channel.name,
-        preText + message.substring(bot_tag().length + 1) + '_"'
-      );
+      // todo: show available commands
     }
   }
 };
