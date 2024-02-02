@@ -1,18 +1,10 @@
-import querystring from "querystring";
 import { type BotConfig } from "../../types";
 import NodeCache from "node-cache";
 import jsonConfig from "config";
 
 const config: BotConfig = jsonConfig as BotConfig;
 
-interface OncallsParams {
-  time_zone: string;
-  "include[]": string;
-  limit: number;
-  offset: number;
-}
-
-const oncallsParams: OncallsParams = {
+const oncallsParams: Record<string, string | number> = {
   time_zone: "UTC",
   "include[]": "users",
   offset: 0,
@@ -39,7 +31,7 @@ interface OncallOptions {
   contentIndex: string;
   secondaryIndex: string;
   uri: string;
-  params: OncallsParams;
+  params: Record<string, string | number>;
 }
 
 /**
@@ -119,7 +111,11 @@ class PagerDuty {
         this.endpoint +
         options.uri +
         "?" +
-        querystring.stringify(options.params);
+        new URLSearchParams({
+          ...options.params,
+          offset: options.params.offset.toString(),
+          limit: options.params.limit.toString(),
+        }).toString();
       requestOptions.url = url;
 
       const response = await fetch(url, requestOptions);

@@ -6,12 +6,11 @@ import { getOncallSlackMembers } from "@api/oncall";
 import { oncallMap } from "@api/pd";
 import { type OncallSlackUser } from "@srcapi/slack";
 
-const oncallMentionedCallback: AllMiddlewareArgs &
-  SlackEventMiddlewareArgs<"message"> = async ({
+const oncallMentionedCallback = async ({
   context,
   event,
   say,
-}: AllMiddlewareArgs & SlackEventMiddlewareArgs<"message">) => {
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<"message">): Promise<void> => {
   console.log("**** oncall mentioned");
   const oncallTagged = context.matches[1];
   const oncalls = await getOncallSlackMembers();
