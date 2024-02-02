@@ -1,13 +1,12 @@
 import app from "@src/app";
 import jsonConfig from "config";
-import { BotConfig } from "@types";
-import { Email } from "@types";
-import { UsersListResponse } from "@slack/web-api";
-import { Member } from "@slack/web-api/dist/response/UsersListResponse";
-const config: BotConfig = jsonConfig as BotConfig;
+import { type BotConfig, type Email } from "@types";
+import { type UsersListResponse } from "@slack/web-api";
+import { type Member } from "@slack/web-api/dist/response/UsersListResponse";
 import NodeCache from "node-cache";
+const config: BotConfig = jsonConfig as BotConfig;
 
-export { Member } from "@slack/web-api/dist/response/UsersListResponse";
+export type { Member } from "@slack/web-api/dist/response/UsersListResponse";
 
 export class OncallSlackUser {
   name: string;
@@ -38,16 +37,16 @@ export default class SlackApi {
   constructor() {
     this.cache = new NodeCache();
     this.cacheInterval = config.slack.cache_interval_seconds;
-    this.getUsers();
+    void this.getUsers();
   }
 
   getUsers = async (): Promise<UsersListResponse> => {
     const cachedUsers: UsersListResponse | undefined =
       this.cache.get("allUsers");
-    if (cachedUsers) {
+    if (cachedUsers !== undefined) {
       return cachedUsers;
     }
-    let usersResult = app.client.users
+    const usersResult = app.client.users
       .list({
         limit: 1000,
       })
@@ -55,18 +54,23 @@ export default class SlackApi {
         return result;
       });
     this.cache.set("allUsers", usersResult, this.cacheInterval);
-    return usersResult;
+    return await usersResult;
   };
 
-  getUser = async (email: Email):Promise<Member> => {
+  getUser = async (email: Email): Promise<Member> => {
     const cachedUser = this.cache.get(email);
-    if (cachedUser) {
-      return cachedUser;
+    if (cachedUser !== undefined) {
+      return cachedUser as Member;
     } else {
       const allUsers = await this.getUsers();
-      const user = allUsers.members!.find((u: Member) => u.profile!.email === email);
+      if (allUsers.members === undefined) {
+        throw new Error("No users found");
+      }
+      const user = allUsers.members.find(
+        (u: Member) => u.profile?.email === email
+      );
       this.cache.set(email, user);
-      if (!user) {
+      if (user === undefined) {
         throw new Error(`No user found with email: ${email}`);
       }
       return user;

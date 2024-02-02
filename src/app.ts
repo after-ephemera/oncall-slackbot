@@ -1,10 +1,6 @@
 import { App, LogLevel } from "@slack/bolt";
 import * as dotenv from "dotenv";
-import jsonConfig from "config";
-import { BotConfig } from "@types";
 import registerListeners from "./listeners";
-
-const config: BotConfig = jsonConfig as BotConfig;
 
 dotenv.config();
 
@@ -13,16 +9,16 @@ const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   socketMode: true,
   appToken: process.env.SLACK_APP_TOKEN,
-  logLevel: LogLevel.DEBUG,
+  logLevel: LogLevel.DEBUG
 });
 
 /** Register Listeners */
 registerListeners(app);
 
 /** Start Bolt App */
-(async () => {
+await (async () => {
   try {
-    await app.start(process.env.PORT || 3000);
+    await app.start(process.env.PORT ?? 3000);
     console.log("⚡️ Bolt app is running! ⚡️");
   } catch (error) {
     console.error("Unable to start App", error);

@@ -1,21 +1,25 @@
-import { AllMiddlewareArgs, SlackEventMiddlewareArgs } from "@slack/bolt";
+import {
+  type AllMiddlewareArgs,
+  type SlackEventMiddlewareArgs,
+} from "@slack/bolt";
 import { getOncallSlackMembers } from "@api/oncall";
 import { oncallMap } from "@api/pd";
-import { OncallSlackUser } from "@srcapi/slack";
+import { type OncallSlackUser } from "@srcapi/slack";
 
-const oncallMentionedCallback = async ({
+const oncallMentionedCallback: AllMiddlewareArgs &
+  SlackEventMiddlewareArgs<"message"> = async ({
   context,
   event,
   say,
 }: AllMiddlewareArgs & SlackEventMiddlewareArgs<"message">) => {
   console.log("**** oncall mentioned");
-  const oncall_tagged = context.matches[1];
+  const oncallTagged = context.matches[1];
   const oncalls = await getOncallSlackMembers();
-  const scheduleId = oncallMap[oncall_tagged];
+  const scheduleId = oncallMap[oncallTagged];
   const oncallUser = oncalls.find(
-    (oncall: OncallSlackUser) => oncall.pdScheduleId === scheduleId,
+    (oncall: OncallSlackUser) => oncall.pdScheduleId === scheduleId
   );
-  if (!oncallUser) {
+  if (oncallUser === undefined) {
     await say({ text: "no oncall user found", thread_ts: event.ts });
     console.error("no oncall user found");
   } else {

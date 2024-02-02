@@ -1,16 +1,16 @@
 import querystring from "querystring";
-import { BotConfig } from "../../types";
+import { type BotConfig } from "../../types";
 import NodeCache from "node-cache";
 import jsonConfig from "config";
 
 const config: BotConfig = jsonConfig as BotConfig;
 
-type OncallsParams = {
+interface OncallsParams {
   time_zone: string;
   "include[]": string;
   limit: number;
   offset: number;
-};
+}
 
 const oncallsParams: OncallsParams = {
   time_zone: "UTC",
@@ -69,31 +69,32 @@ class PagerDuty {
 
   async getAllPaginatedData(options: OncallOptions): Promise<PdOncallResult[]> {
     console.debug("getAllPaginatedData");
-    options.params = options.params || {};
     options.params.limit = 100; // 100 is the max limit allowed by pagerduty
     options.params.offset = 0;
 
-    var total = null,
-      items: PdOncallResult[] = [],
-      self = this,
-      requestOptions: { headers: Headers; url?: string } = {
-        headers: self.headers,
-      };
+    let total = null;
+    let items: PdOncallResult[] = [];
+    const requestOptions: { headers: Headers; url?: string } = {
+      headers: this.headers,
+    };
 
-    var pagedCallback = async (error: any, content?: any) => {
-      if (error) {
+    const pagedCallback = async (
+      error: any,
+      content?: any
+    ): Promise<PdOncallResult[]> => {
+      if (error !== null) {
         console.debug("Issues with pagedCallback: " + error);
         return error;
       }
 
-      if (!content || !content[options.contentIndex]) {
+      if (content?.[options.contentIndex] === undefined) {
         error = "Page does not have valid data: " + JSON.stringify(content);
         console.debug(error);
         return error;
       }
 
       if (content[options.contentIndex].length > 0) {
-        items = items.concat(content[options.contentIndex]);
+        items = items.concat(content[options.contentIndex] as PdOncallResult[]);
       }
 
       options.params.offset = content.offset + content.limit; // Update the offset for the next paging request
@@ -101,21 +102,21 @@ class PagerDuty {
 
       items = items.filter((item, _i) => {
         // only add oncalls with a schedule
-        return item.schedule || false;
+        return item.schedule;
       });
 
       if (options.params.offset >= total) {
         return items;
       } else {
-        await requestAnotherPage();
+        return await requestAnotherPage();
       }
     };
 
-    var requestAnotherPage = async () => {
+    const requestAnotherPage = async (): Promise<PdOncallResult[]> => {
       console.debug("requesting another page");
       // must use node's built in querystring since qs doesn't build arrays like PagerDuty expects.
       const url =
-        self.endpoint +
+        this.endpoint +
         options.uri +
         "?" +
         querystring.stringify(options.params);
@@ -134,14 +135,14 @@ class PagerDuty {
 
   async getOncalls(params?: any): Promise<PdOncallResult[]> {
     console.debug("pagerduty.getOnCalls");
-    var options = {
+    const options = {
       contentIndex: "oncalls",
       secondaryIndex: "user",
       uri: "/oncalls",
-      params: params || oncallsParams,
+      params: params ?? oncallsParams,
     };
     let oncalls = this.cache.get(options.contentIndex);
-    if (oncalls == undefined) {
+    if (oncalls === undefined) {
       oncalls = this.getAllPaginatedData(options);
       this.cache.set(options.contentIndex, oncalls, this.cacheInterval);
     }

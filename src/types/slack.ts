@@ -1,4 +1,4 @@
-import { IConfig } from "config";
+import type { IConfig } from "config";
 
 export type Email = string;
 
