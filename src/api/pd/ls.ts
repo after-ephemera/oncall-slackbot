@@ -38,7 +38,7 @@ export const makeOncallMappingMessage = (
       .map(
         ([shortnames, s]: Array<string[] | OncallSlackUser | undefined>) =>
           `(${(shortnames as string[]).join(" | ")}): @${
-            (s as OncallSlackUser).name
+            (s as OncallSlackUser)?.name
           }`
       )
       .join("\n")

@@ -19,7 +19,7 @@ export const getOncallSlackMembers = async (): Promise<OncallSlackUser[]> => {
           slackUser.id ?? ""
         )
       );
-      if (slackUser.name !== undefined) {
+      if (slackUser && slackUser.name !== undefined) {
         oncallSlackerNames.push(slackUser.name);
       }
     } catch (e) {
