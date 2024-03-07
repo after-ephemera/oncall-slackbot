@@ -46,7 +46,9 @@
             "bot_events": [
                 "app_home_opened",
                 "message.channels",
-                "app_mention"
+                "message.groups",
+                "app_mention",
+                "message.im"
             ]
         },
         "interactivity": {
