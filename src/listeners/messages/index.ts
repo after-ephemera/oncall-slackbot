@@ -7,12 +7,10 @@ import {
 } from "@src/listeners/messages/app-mentioned-dm";
 import { oncallMap } from "@api/pd";
 
-const USER_MENTION_REGEX = "<@U[A-Z0-9]{8,10}>";
-// These regexes optionally include the bot user mention, allowing for
-// DM messages to the bot without the mention
-const VERSION_REGEX = new RegExp(`(${USER_MENTION_REGEX} )?version`);
-const LS_REGEX = new RegExp(`(${USER_MENTION_REGEX} )?ls`);
-const HELP_REGEX = new RegExp(`(${USER_MENTION_REGEX} )?help`);
+// These regexes allow for DM messages to the bot without the mention
+const VERSION_REGEX = new RegExp(`^version$`);
+const LS_REGEX = new RegExp(`^ls$`);
+const HELP_REGEX = new RegExp(`^help$`);
 
 const register = async (app: App): Promise<void> => {
   // This regex matches any string that contains a mention of any of the oncall shortnames.
@@ -23,8 +21,6 @@ const register = async (app: App): Promise<void> => {
   console.log("**** allShortnamesRegex", allShortnamesRegex);
   app.message(allShortnamesRegex, oncallMentionedCallback);
 
-  const result = await app.client.auth.test();
-  let bot_id = result.user_id;
   app.message(VERSION_REGEX, appMentionedDmVersionCallback);
   app.message(LS_REGEX, appMentionedDmLsCallback);
   app.message(HELP_REGEX, appMentionedDmHelpCallback);
