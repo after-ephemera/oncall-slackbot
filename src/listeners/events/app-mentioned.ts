@@ -2,9 +2,9 @@ import {
   type AllMiddlewareArgs,
   type SlackEventMiddlewareArgs,
 } from "@slack/bolt";
-import { getOncallSlackMembers } from "@api/oncall";
-import { version, name as packageName } from "package.json";
-import { makeOncallMappingMessage } from "@api/pd";
+import handleVersionCommand from "@srclisteners/common/version";
+import handleLsCommand from "@srclisteners/common/ls";
+import handleHelpCommand from "@srclisteners/common/help";
 
 const USER_MENTION_REGEX = "^<@U[A-Z0-9]{8,10}>";
 const VERSION_REGEX = new RegExp(`${USER_MENTION_REGEX} version`);
@@ -13,27 +13,17 @@ const LS_REGEX = new RegExp(`${USER_MENTION_REGEX} ls`);
 const appMentionedCallback = async ({
   event,
   say,
-}: AllMiddlewareArgs & SlackEventMiddlewareArgs<"app_mention">): Promise<void> => {
+}: AllMiddlewareArgs &
+  SlackEventMiddlewareArgs<"app_mention">): Promise<void> => {
   console.log(`**** bot mentioned ${event.text}`);
   const threadTs = event.ts;
   if (event.text.match(VERSION_REGEX) !== null) {
-    await say({
-      text: `I am *${packageName}* and running version ${version}.`,
-      thread_ts: threadTs,
-    });
+    await handleVersionCommand(threadTs, say);
   } else if (event.text.match(LS_REGEX) !== null) {
-    const slackMembers = await getOncallSlackMembers();
-    const usersMessage = makeOncallMappingMessage(slackMembers);
-    await say({
-      text: `Current oncall listing:\n ${usersMessage}`,
-      thread_ts: threadTs,
-    });
+    await handleLsCommand(threadTs, say);
   } else {
     // list available commands
-    await say({
-      text: "You can @ me with the following commands:\n- version\n- ls",
-      thread_ts: threadTs,
-    });
+    handleHelpCommand(threadTs, say);
   }
 };
 
