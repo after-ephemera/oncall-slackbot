@@ -1,6 +1,6 @@
-import { type BotConfig } from "@types";
-import { type OncallSlackUser } from "@api/slack";
-import jsonConfig from "config";
+import { type BotConfig } from '@types';
+import { type OncallSlackUser } from '@api/slack';
+import jsonConfig from 'config';
 
 const config: BotConfig = jsonConfig as BotConfig;
 type OncallMap = Record<string, string>;
@@ -29,18 +29,25 @@ export const makeOncallMappingMessage = (
   const shortnamesMap = transformMapping(oncallMap);
   return (
     Object.entries(shortnamesMap)
-      .map(([pdScheduleId, shortnames]) => [
+      .map(([pdEscalationPolicyId, shortnames]) => [
         shortnames,
-        oncallSlackMembers.find((s) => s.pdScheduleId === pdScheduleId),
+        oncallSlackMembers.find(
+          (s) => s.pdEscalationPolicyId === pdEscalationPolicyId
+        ),
       ])
       // remove null and undefined
-      .filter(([_, id]: Array<string[] | OncallSlackUser | undefined>) => id !== null || id !== undefined)
+      .filter(([_, id]: Array<string[] | OncallSlackUser | undefined>) => {
+        if (id === undefined || id === null) {
+          console.debug(`filtering id: ${id}`);
+        }
+        return id !== null && id !== undefined;
+      })
       .map(
         ([shortnames, s]: Array<string[] | OncallSlackUser | undefined>) =>
-          `(${(shortnames as string[]).join(" | ")}): @${
+          `(${(shortnames as string[]).join(' | ')}): @${
             (s as OncallSlackUser)?.name
           }`
       )
-      .join("\n")
+      .join('\n')
   );
 };

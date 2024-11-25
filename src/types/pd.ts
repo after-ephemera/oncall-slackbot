@@ -8,7 +8,12 @@ export interface PdSchedule {
   id: string;
 }
 
+interface EscalationPolicy {
+  id?: string;
+}
+
 export interface PdOncallResult {
   user: PdUser;
-  schedule: PdSchedule;
+  schedule?: PdSchedule;
+  escalation_policy: EscalationPolicy;
 }

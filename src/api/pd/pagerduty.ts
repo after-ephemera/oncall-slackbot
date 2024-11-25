@@ -1,14 +1,15 @@
-import { type BotConfig } from "../../types";
-import NodeCache from "node-cache";
-import jsonConfig from "config";
+import { type BotConfig } from '../../types';
+import NodeCache from 'node-cache';
+import jsonConfig from 'config';
 
 const config: BotConfig = jsonConfig as BotConfig;
 
 const oncallsParams: Record<string, string | number> = {
-  time_zone: "UTC",
-  "include[]": "users",
+  time_zone: 'UTC',
+  'include[]': 'users',
   offset: 0,
   limit: 100000,
+  total: 'true',
 };
 
 export interface PdUser {
@@ -21,10 +22,15 @@ interface PdSchedule {
   id: string;
 }
 
+interface EscalationPolicy {
+  id?: string;
+}
+
 export interface PdOncallResult {
   id?: string;
   user: PdUser;
-  schedule: PdSchedule;
+  schedule?: PdSchedule;
+  escalation_policy: EscalationPolicy;
 }
 
 interface OncallOptions {
@@ -49,18 +55,18 @@ class PagerDuty {
 
   constructor(options: any) {
     this.headers = new Headers({
-      Accept: "application/vnd.pagerduty+json;version=2",
-      "Content-Type": "application/json",
-      Authorization: "Token token=" + options.pagerduty_token,
+      Accept: 'application/vnd.pagerduty+json;version=2',
+      'Content-Type': 'application/json',
+      Authorization: 'Token token=' + options.pagerduty_token,
     });
-    this.endpoint = "https://api.pagerduty.com";
+    this.endpoint = 'https://api.pagerduty.com';
     this.cache = new NodeCache();
     this.token = options.pagerduty_token;
     this.cacheInterval = options.cache_interval_seconds;
   }
 
   async getAllPaginatedData(options: OncallOptions): Promise<PdOncallResult[]> {
-    console.debug("getAllPaginatedData");
+    console.debug('getAllPaginatedData');
     options.params.limit = 100; // 100 is the max limit allowed by pagerduty
     options.params.offset = 0;
 
@@ -75,12 +81,12 @@ class PagerDuty {
       content?: any
     ): Promise<PdOncallResult[]> => {
       if (error !== null) {
-        console.debug("Issues with pagedCallback: " + error);
+        console.debug('Issues with pagedCallback: ' + error);
         return error;
       }
 
       if (content?.[options.contentIndex] === undefined) {
-        error = "Page does not have valid data: " + JSON.stringify(content);
+        error = 'Page does not have valid data: ' + JSON.stringify(content);
         console.debug(error);
         return error;
       }
@@ -98,6 +104,11 @@ class PagerDuty {
       });
 
       if (options.params.offset >= total) {
+        console.debug(
+          `returning items because offset: ${
+            options.params.offset
+          } >= total: ${JSON.stringify(content, null, 2)}`
+        );
         return items;
       } else {
         return await requestAnotherPage();
@@ -105,18 +116,18 @@ class PagerDuty {
     };
 
     const requestAnotherPage = async (): Promise<PdOncallResult[]> => {
-      console.debug("requesting another page");
       // must use node's built in querystring since qs doesn't build arrays like PagerDuty expects.
       const url =
         this.endpoint +
         options.uri +
-        "?" +
+        '?' +
         new URLSearchParams({
           ...options.params,
           offset: options.params.offset.toString(),
           limit: options.params.limit.toString(),
         }).toString();
       requestOptions.url = url;
+      console.debug(`requesting another page: ${url}`);
 
       const response = await fetch(url, requestOptions);
       if (!response.ok) {
@@ -130,11 +141,11 @@ class PagerDuty {
   }
 
   async getOncalls(params?: any): Promise<PdOncallResult[]> {
-    console.debug("pagerduty.getOnCalls");
+    console.debug('pagerduty.getOnCalls');
     const options = {
-      contentIndex: "oncalls",
-      secondaryIndex: "user",
-      uri: "/oncalls",
+      contentIndex: 'oncalls',
+      secondaryIndex: 'user',
+      uri: '/oncalls',
       params: params ?? oncallsParams,
     };
     let oncalls = this.cache.get(options.contentIndex);
@@ -146,5 +157,5 @@ class PagerDuty {
   }
 }
 
-const pagerDuty: PagerDuty = new PagerDuty(config.get("pagerduty"));
+const pagerDuty: PagerDuty = new PagerDuty(config.get('pagerduty'));
 export default pagerDuty;
